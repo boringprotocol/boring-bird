@@ -139,7 +139,7 @@ async function sendTweettoTwitter({ title, status }) {
   const message = `Status of Notion Entry ("${title}") has been updated to "${status}".`
   console.log(message)
 
-  client.v1.tweet({ status: title }).then((val) => {
+  client.v1.tweet({ title }).then((val) => {
     console.log(val)
     console.log("success")
 }).catch((err) => {
