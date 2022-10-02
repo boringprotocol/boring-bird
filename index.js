@@ -8,11 +8,18 @@
 
 const { Client } = require("@notionhq/client")
 const dotenv = require("dotenv")
-const twitter = require('twitter-lite')
+// const twitter = require('twitter-lite') // Moving away from Twitter-lite to Twitter-API-V2
+const { TwitterApi } = require("twitter-api-v2")
 
 dotenv.config()
 /* Connect to Twitter */
-const client = new twitter(config)
+// const client = new twitter(config) // TRying Twitter-API-v2
+const client = new TwitterApi({
+  appKey: process.env.CONSUMER_KEY,
+  appSecret: process.env.CONSUMER_SECRET,
+  accessToken: process.env.ACCESS_TOKEN_KEY,
+  accessSecret: process.env.ACCESS_TOKEN_SECRET,
+})
 /* Connect to Notion */
 const notion = new Client({ auth: process.env.NOTION_KEY })
 
@@ -93,7 +100,7 @@ async function getEntriesFromNotionDatabase() {
       ? statusPropertyItem.select.name
       : "No Status"
 
-    const titlePropertyId = page.properties["Name"].id
+    const titlePropertyId = page.properties["Tweet"].id
     const titlePropertyItems = await getPropertyValue({
       pageId,
       propertyId: titlePropertyId,
@@ -132,24 +139,13 @@ async function sendTweettoTwitter({ title, status }) {
   const message = `Status of Notion Entry ("${title}") has been updated to "${status}".`
   console.log(message)
 
-  client
-  .post('statuses/update', { status: title })
-  .then(result => {
-    console.log('You successfully tweeted this : "' + result.text + '"')
-  })
-  .catch(console.error)
-  try {
-    // Send an email about this change.
-    await sendgridMail.send({
-      to: process.env.EMAIL_TO_FIELD,
-      from: process.env.EMAIL_FROM_FIELD,
-      subject: "Notion Entry Status Updated",
-      text: message,
-    })
-    console.log("Email Sent")
-  } catch (error) {
-    console.error(error)
-  }
+  client.v1.tweet({ status: title }).then((val) => {
+    console.log(val)
+    console.log("success")
+}).catch((err) => {
+    console.log(err)
+})
+  
 }
 
 /**
